@@ -6,19 +6,6 @@ from . import app, db
 from .forms import OpinionForm
 from .models import Opinion
 
-@app.route('/')
-def index_view():
-    # Определяется количество мнений в базе данных:
-    quantity = Opinion.query.count()
-    # Если мнений нет...
-    if not quantity:
-        abort(500)
-    # Иначе выбирается случайное число в диапазоне от 0 до quantity...
-    offset_value = randrange(quantity)
-    # ...и определяется случайный объект:
-    opinion = Opinion.query.offset(offset_value).first()
-    return render_template('opinion.html', opinion=opinion)
-
 @app.route('/add', methods=['GET', 'POST'])
 def add_opinion_view():
     form = OpinionForm()
@@ -54,4 +41,20 @@ def opinion_view(id):
     # Теперь можно запросить нужный объект по id...
     opinion = Opinion.query.get_or_404(id)
     # ...и передать его в шаблон (шаблон тот же, что и для главной страницы):
+    return render_template('opinion.html', opinion=opinion)
+
+
+def random_opinion():
+    quantity = Opinion.query.count()
+    if quantity:
+        offset_value = randrange(quantity)
+        opinion = Opinion.query.offset(offset_value).first()
+        return opinion
+
+@app.route('/')
+def index_view():
+    opinion = random_opinion()
+    # Если random_opinion() вернула None, значит, в БД нет записей:
+    if opinion is None:
+        abort(500)
     return render_template('opinion.html', opinion=opinion)
